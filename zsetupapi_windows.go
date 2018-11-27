@@ -92,7 +92,7 @@ func setupDiGetDeviceInstanceId(DeviceInfoSet Handle, DeviceInfoData *spDeviceIn
 	return
 }
 
-func setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, ClassGuid *Guid, MemberIndex uint32, DeviceInterfaceData *SPDeviceInterfaceData) (err error) {
+func setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, ClassGuid *Guid, MemberIndex uint32, DeviceInterfaceData *spDeviceInterfaceData) (err error) {
 	r1, _, e1 := syscall.Syscall6(procSetupDiEnumDeviceInterfaces.Addr(), 5, uintptr(DeviceInfoSet), uintptr(unsafe.Pointer(DeviceInfoData)), uintptr(unsafe.Pointer(ClassGuid)), uintptr(MemberIndex), uintptr(unsafe.Pointer(DeviceInterfaceData)), 0)
 	if r1 == 0 {
 		if e1 != 0 {
@@ -104,7 +104,7 @@ func setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceI
 	return
 }
 
-func setupDiGetDeviceInterfaceDetail(DeviceInfoSet Handle, DeviceInterfaceData *SPDeviceInterfaceData, DeviceInterfaceDetailData *SPDeviceInterfaceDetailData, DeviceInterfaceDetailDataSize uint32, RequiredSize *uint32, DeviceInfoData *spDeviceInformationData) (err error) {
+func setupDiGetDeviceInterfaceDetail(DeviceInfoSet Handle, DeviceInterfaceData *spDeviceInterfaceData, DeviceInterfaceDetailData *spDeviceInterfaceDetailData, DeviceInterfaceDetailDataSize uint32, RequiredSize *uint32, DeviceInfoData *spDeviceInformationData) (err error) {
 	r1, _, e1 := syscall.Syscall6(procSetupDiGetDeviceInterfaceDetailA.Addr(), 6, uintptr(DeviceInfoSet), uintptr(unsafe.Pointer(DeviceInterfaceData)), uintptr(unsafe.Pointer(DeviceInterfaceDetailData)), uintptr(DeviceInterfaceDetailDataSize), uintptr(unsafe.Pointer(RequiredSize)), uintptr(unsafe.Pointer(DeviceInfoData)))
 	if r1 == 0 {
 		if e1 != 0 {

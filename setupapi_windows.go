@@ -20,8 +20,8 @@ const InvalidHandle = ^Handle(0)
 //sys	setupDiGetClassDevsEx(ClassGuid *Guid, Enumerator *string, hwndParent uintptr, Flags uint32, DeviceInfoSet uintptr, MachineName string, reserved uint32) (handle Handle, err error) = setupapi.SetupDiGetClassDevsExW
 //sys	setupDiEnumDeviceInfo(DeviceInfoSet Handle, MemberIndex uint32, DeviceInfoData *spDeviceInformationData) (err error) = setupapi.SetupDiEnumDeviceInfo
 //sys	setupDiGetDeviceInstanceId(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, DeviceInstanceId unsafe.Pointer, DeviceInstanceIdSize uint32, RequiredSize *uint32) (err error) = setupapi.SetupDiGetDeviceInstanceIdW
-//sys   setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, ClassGuid *Guid, MemberIndex uint32,  DeviceInterfaceData *SPDeviceInterfaceData) (err error) = setupapi.SetupDiEnumDeviceInterfaces
-//sys	setupDiGetDeviceInterfaceDetail(DeviceInfoSet Handle, DeviceInterfaceData *SPDeviceInterfaceData, DeviceInterfaceDetailData *SPDeviceInterfaceDetailData, DeviceInterfaceDetailDataSize uint32, RequiredSize *uint32, DeviceInfoData *spDeviceInformationData) (err error) = setupapi.SetupDiGetDeviceInterfaceDetailA
+//sys   setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, ClassGuid *Guid, MemberIndex uint32,  DeviceInterfaceData *spDeviceInterfaceData) (err error) = setupapi.SetupDiEnumDeviceInterfaces
+//sys	setupDiGetDeviceInterfaceDetail(DeviceInfoSet Handle, DeviceInterfaceData *spDeviceInterfaceData, DeviceInterfaceDetailData *spDeviceInterfaceDetailData, DeviceInterfaceDetailDataSize uint32, RequiredSize *uint32, DeviceInfoData *spDeviceInformationData) (err error) = setupapi.SetupDiGetDeviceInterfaceDetailA
 
 type Guid struct {
 	Data1 uint32
@@ -42,14 +42,14 @@ type spDeviceInformationData struct {
 	reserved  uintptr
 }
 
-type SPDeviceInterfaceData struct {
+type spDeviceInterfaceData struct {
 	cbSize    uint32
 	ClassGuid Guid
 	Flags     uint32
 	reserved  uintptr
 }
 
-type SPDeviceInterfaceDetailData struct {
+type spDeviceInterfaceDetailData struct {
 	cbSize     uint32
 	DevicePath [512]byte
 }
@@ -134,8 +134,8 @@ func SetupDiGetClassDevsEx(ClassGuid Guid, Enumerator string, hwndParent uintptr
 
 func (di DevInfo) DevicePath(ClassGuid Guid) (string, error) {
 	var needed uint32
-	var devInterfaceData SPDeviceInterfaceData
-	var devInterfaceDetailData SPDeviceInterfaceDetailData
+	var devInterfaceData spDeviceInterfaceData
+	var devInterfaceDetailData spDeviceInterfaceDetailData
 	var devInformationData spDeviceInformationData
 
 	devInterfaceData.cbSize = uint32(unsafe.Sizeof(devInterfaceData))
