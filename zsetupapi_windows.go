@@ -12,10 +12,12 @@ var _ unsafe.Pointer
 var (
 	modsetupapi = syscall.NewLazyDLL("setupapi.dll")
 
-	procSetupDiClassGuidsFromNameExW = modsetupapi.NewProc("SetupDiClassGuidsFromNameExW")
-	procSetupDiGetClassDevsExW       = modsetupapi.NewProc("SetupDiGetClassDevsExW")
-	procSetupDiEnumDeviceInfo        = modsetupapi.NewProc("SetupDiEnumDeviceInfo")
-	procSetupDiGetDeviceInstanceIdW  = modsetupapi.NewProc("SetupDiGetDeviceInstanceIdW")
+	procSetupDiClassGuidsFromNameExW     = modsetupapi.NewProc("SetupDiClassGuidsFromNameExW")
+	procSetupDiGetClassDevsExW           = modsetupapi.NewProc("SetupDiGetClassDevsExW")
+	procSetupDiEnumDeviceInfo            = modsetupapi.NewProc("SetupDiEnumDeviceInfo")
+	procSetupDiGetDeviceInstanceIdW      = modsetupapi.NewProc("SetupDiGetDeviceInstanceIdW")
+	procSetupDiEnumDeviceInterfaces      = modsetupapi.NewProc("SetupDiEnumDeviceInterfaces")
+	procSetupDiGetDeviceInterfaceDetailA = modsetupapi.NewProc("SetupDiGetDeviceInterfaceDetailA")
 )
 
 func setupDiClassGuidsFromNameEx(ClassName string, guid *Guid, size uint32, required_size *uint32, machineName string, reserved uint32) (err error) {
@@ -80,6 +82,30 @@ func setupDiEnumDeviceInfo(DeviceInfoSet Handle, MemberIndex uint32, DeviceInfoD
 
 func setupDiGetDeviceInstanceId(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, DeviceInstanceId unsafe.Pointer, DeviceInstanceIdSize uint32, RequiredSize *uint32) (err error) {
 	r1, _, e1 := syscall.Syscall6(procSetupDiGetDeviceInstanceIdW.Addr(), 5, uintptr(DeviceInfoSet), uintptr(unsafe.Pointer(DeviceInfoData)), uintptr(DeviceInstanceId), uintptr(DeviceInstanceIdSize), uintptr(unsafe.Pointer(RequiredSize)), 0)
+	if r1 == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, ClassGuid *Guid, MemberIndex uint32, DeviceInterfaceData *SPDeviceInterfaceData) (err error) {
+	r1, _, e1 := syscall.Syscall6(procSetupDiEnumDeviceInterfaces.Addr(), 5, uintptr(DeviceInfoSet), uintptr(unsafe.Pointer(DeviceInfoData)), uintptr(unsafe.Pointer(ClassGuid)), uintptr(MemberIndex), uintptr(unsafe.Pointer(DeviceInterfaceData)), 0)
+	if r1 == 0 {
+		if e1 != 0 {
+			err = error(e1)
+		} else {
+			err = syscall.EINVAL
+		}
+	}
+	return
+}
+
+func setupDiGetDeviceInterfaceDetail(DeviceInfoSet Handle, DeviceInterfaceData *SPDeviceInterfaceData, DeviceInterfaceDetailData *SPDeviceInterfaceDetailData, DeviceInterfaceDetailDataSize uint32, RequiredSize *uint32, DeviceInfoData *spDeviceInformationData) (err error) {
+	r1, _, e1 := syscall.Syscall6(procSetupDiGetDeviceInterfaceDetailA.Addr(), 6, uintptr(DeviceInfoSet), uintptr(unsafe.Pointer(DeviceInterfaceData)), uintptr(unsafe.Pointer(DeviceInterfaceDetailData)), uintptr(DeviceInterfaceDetailDataSize), uintptr(unsafe.Pointer(RequiredSize)), uintptr(unsafe.Pointer(DeviceInfoData)))
 	if r1 == 0 {
 		if e1 != 0 {
 			err = error(e1)

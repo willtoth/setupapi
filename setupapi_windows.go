@@ -20,6 +20,8 @@ const InvalidHandle = ^Handle(0)
 //sys	setupDiGetClassDevsEx(ClassGuid *Guid, Enumerator *string, hwndParent uintptr, Flags uint32, DeviceInfoSet uintptr, MachineName string, reserved uint32) (handle Handle, err error) = setupapi.SetupDiGetClassDevsExW
 //sys	setupDiEnumDeviceInfo(DeviceInfoSet Handle, MemberIndex uint32, DeviceInfoData *spDeviceInformationData) (err error) = setupapi.SetupDiEnumDeviceInfo
 //sys	setupDiGetDeviceInstanceId(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, DeviceInstanceId unsafe.Pointer, DeviceInstanceIdSize uint32, RequiredSize *uint32) (err error) = setupapi.SetupDiGetDeviceInstanceIdW
+//sys   setupDiEnumDeviceInterfaces(DeviceInfoSet Handle, DeviceInfoData *spDeviceInformationData, ClassGuid *Guid, MemberIndex uint32,  DeviceInterfaceData *SPDeviceInterfaceData) (err error) = setupapi.SetupDiEnumDeviceInterfaces
+//sys	setupDiGetDeviceInterfaceDetail(DeviceInfoSet Handle, DeviceInterfaceData *SPDeviceInterfaceData, DeviceInterfaceDetailData *SPDeviceInterfaceDetailData, DeviceInterfaceDetailDataSize uint32, RequiredSize *uint32, DeviceInfoData *spDeviceInformationData) (err error) = setupapi.SetupDiGetDeviceInterfaceDetailA
 
 type Guid struct {
 	Data1 uint32
@@ -38,6 +40,18 @@ type spDeviceInformationData struct {
 	ClassGuid Guid
 	DevInst   uint32
 	reserved  uintptr
+}
+
+type SPDeviceInterfaceData struct {
+	cbSize    uint32
+	ClassGuid Guid
+	Flags     uint32
+	reserved  uintptr
+}
+
+type SPDeviceInterfaceDetailData struct {
+	cbSize     uint32
+	DevicePath [512]byte
 }
 
 func (g Guid) String() string {
@@ -116,4 +130,37 @@ func SetupDiGetClassDevsEx(ClassGuid Guid, Enumerator string, hwndParent uintptr
 
 	hDevInfo, err := setupDiGetClassDevsEx(&ClassGuid, enumerator, hwndParent, uint32(Flags), DeviceInfoSet, MachineName, 0)
 	return DevInfo(hDevInfo), err
+}
+
+func (di DevInfo) DevicePath(ClassGuid Guid) (string, error) {
+	var needed uint32
+	var devInterfaceData SPDeviceInterfaceData
+	var devInterfaceDetailData SPDeviceInterfaceDetailData
+	var devInformationData spDeviceInformationData
+
+	devInterfaceData.cbSize = uint32(unsafe.Sizeof(devInterfaceData))
+
+	tmpGUID := ClassGuid
+
+	err := setupDiEnumDeviceInterfaces(Handle(di), nil, &tmpGUID, 0, &devInterfaceData)
+	if err != nil {
+		return "", fmt.Errorf("setupDiEnumDeviceInterfaces error: %v", err)
+	}
+
+	//This call will produce an error, but still return number of bytes
+	err = setupDiGetDeviceInterfaceDetail(Handle(di), &devInterfaceData, nil, 0, &needed, nil)
+
+	if needed == 0 || needed > 512 {
+		return "", fmt.Errorf("DevicePath error invalid returned size: %v", err)
+	}
+
+	devInterfaceDetailData.cbSize = 8 //uint32(unsafe.Sizeof(devInterfaceDetailData))
+	devInformationData.cbSize = uint32(unsafe.Sizeof(devInformationData))
+
+	err = setupDiGetDeviceInterfaceDetail(Handle(di), &devInterfaceData, &devInterfaceDetailData, needed, nil, &devInformationData)
+
+	if err != nil {
+		return "", fmt.Errorf("DevicePath error2: %v", err)
+	}
+	return string(devInterfaceDetailData.DevicePath[:]), err
 }
