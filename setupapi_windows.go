@@ -132,7 +132,7 @@ func SetupDiGetClassDevsEx(ClassGuid Guid, Enumerator string, hwndParent uintptr
 	return DevInfo(hDevInfo), err
 }
 
-func (di DevInfo) DevicePath(ClassGuid Guid) (string, error) {
+func (di DevInfo) DevicePath(ClassGuid Guid, MemberIndex uint32) (string, error) {
 	var needed uint32
 	var devInterfaceData spDeviceInterfaceData
 	var devInterfaceDetailData spDeviceInterfaceDetailData
@@ -142,7 +142,7 @@ func (di DevInfo) DevicePath(ClassGuid Guid) (string, error) {
 
 	tmpGUID := ClassGuid
 
-	err := setupDiEnumDeviceInterfaces(Handle(di), nil, &tmpGUID, 0, &devInterfaceData)
+	err := setupDiEnumDeviceInterfaces(Handle(di), nil, &tmpGUID, MemberIndex, &devInterfaceData)
 	if err != nil {
 		return "", fmt.Errorf("setupDiEnumDeviceInterfaces error: %v", err)
 	}
@@ -162,5 +162,5 @@ func (di DevInfo) DevicePath(ClassGuid Guid) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("DevicePath error2: %v", err)
 	}
-	return string(devInterfaceDetailData.DevicePath[:]), err
+	return string(devInterfaceDetailData.DevicePath[:needed]), err
 }
